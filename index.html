@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لعبة خط الأعداد والمتباينات</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #f0f8ff, #87ceeb);
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    .container {
+      padding: 20px;
+    }
+    .button {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin: 10px;
+      cursor: pointer;
+    }
+    .question {
+      margin: 20px 0;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .number-line {
+      position: relative;
+      width: 80%;
+      height: 50px;
+      margin: 20px auto;
+      border: 2px solid #000;
+      border-radius: 5px;
+    }
+    .number-line span {
+      position: absolute;
+      bottom: -20px;
+      font-size: 14px;
+    }
+    .highlight {
+      position: absolute;
+      height: 100%;
+      background-color: rgba(135, 206, 250, 0.5);
+      border: 1px dashed #000;
+    }
+    .inputs {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 20px 0;
+    }
+    .inputs input {
+      width: 60px;
+      font-size: 18px;
+      text-align: center;
+      padding: 5px;
+      margin: 0 10px;
+    }
+    .symbol {
+      font-size: 24px;
+      font-weight: bold;
+      background: #fff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 2px solid #000;
+      margin: 0 10px;
+    }
+    .feedback {
+      font-size: 20px;
+      margin: 20px;
+    }
+    .correct {
+      color: green;
+    }
+    .wrong {
+      color: red;
+    }
+    .score {
+      font-size: 18px;
+      margin: 10px 0;
+    }
+    .timer {
+      font-size: 20px;
+      color: #ff4500;
+    }
+    footer {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="welcome-screen">
+    <h1>مرحبًا بك في لعبة خط الأعداد والمتباينات</h1>
+    <input type="text" id="player-name" placeholder="أدخل اسمك">
+    <button class="button" onclick="startGame()">ابدأ اللعبة</button>
+  </div>
+
+  <div class="container" id="game-screen" style="display: none;">
+    <div class="score" id="score">النقاط: 0</div>
+    <div class="timer" id="timer">الوقت: 30</div>
+    <div class="question">حدد المتباينة بناءً على خط الأعداد التالي:</div>
+
+    <div class="number-line" id="number-line">
+      <!-- خط الأعداد -->
+      <span style="left: 0;">0</span>
+      <span style="left: 20%;">10</span>
+      <span style="left: 40%;">20</span>
+      <span style="left: 60%;">30</span>
+      <span style="left: 80%;">40</span>
+      <span style="left: 100%;">50</span>
+      <div class="highlight" id="highlight" style="left: 40%; width: 20%;"></div>
+    </div>
+
+    <div class="inputs">
+      <input type="text" id="variable" placeholder="المتغير">
+      <div class="symbol" id="selected-symbol">?</div>
+      <input type="number" id="number" placeholder="العدد">
+    </div>
+
+    <div>
+      <button class="button" onclick="selectSymbol('<')">&lt;</button>
+      <button class="button" onclick="selectSymbol('≤')">≤</button>
+      <button class="button" onclick="selectSymbol('>')">&gt;</button>
+      <button class="button" onclick="selectSymbol('≥')">≥</button>
+      <button class="button" onclick="selectSymbol('≠')">≠</button>
+    </div>
+
+    <button class="button" onclick="submitAnswer()">إرسال الإجابة</button>
+    <div class="feedback" id="feedback"></div>
+    <button class="button" id="next-question" style="display: none;" onclick="generateQuestion()">السؤال التالي</button>
+  </div>
+
+  <footer>
+    جميع الحقوق محفوظة © أحمد ياسين
+  </footer>
+
+  <script>
+    let playerName = "";
+    let score = 0;
+    let currentQuestion = {};
+    let timer;
+    let timeLeft;
+    let questionCount = 0;
+    const maxQuestions = 10;
+
+    function startGame() {
+      playerName = document.getElementById("player-name").value;
+      if (!playerName) {
+        alert("يرجى إدخال الاسم قبل بدء اللعبة!");
+        return;
+      }
+
+      document.getElementById("welcome-screen").style.display = "none";
+      document.getElementById("game-screen").style.display = "block";
+      score = 0;
+      questionCount = 0;
+      generateQuestion();
+    }
+
+    function startTimer() {
+      timeLeft = 30;
+      document.getElementById("timer").innerText = `الوقت: ${timeLeft}`;
+      timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").innerText = `الوقت: ${timeLeft}`;
+        if (timeLeft === 0) {
+          clearInterval(timer);
+          document.getElementById("feedback").innerText = "انتهى الوقت!";
+          document.getElementById("feedback").classList.add("wrong");
+          document.getElementById("next-question").style.display = "block";
+        }
+      }, 1000);
+    }
+
+    function generateQuestion() {
+      if (questionCount >= maxQuestions) {
+        endGame();
+        return;
+      }
+
+      clearInterval(timer);
+      startTimer();
+      questionCount++;
+
+      const start = Math.floor(Math.random() * 40) + 1;
+      const end = start + Math.floor(Math.random() * 10) + 5;
+      currentQuestion = {
+        start,
+        end,
+        symbol: Math.random() > 0.5 ? "<" : ">",
+      };
+
+      const highlight = document.getElementById("highlight");
+      highlight.style.left = `${(start / 50) * 100}%`;
+      highlight.style.width = `${((end - start) / 50) * 100}%`;
+
+      document.getElementById("feedback").innerText = "";
+      document.getElementById("selected-symbol").innerText = "?";
+      document.getElementById("variable").value = "";
+      document.getElementById("number").value = "";
+      document.getElementById("next-question").style.display = "none";
+    }
+
+    function selectSymbol(symbol) {
+      document.getElementById("selected-symbol").innerText = symbol;
+    }
+
+    function submitAnswer() {
+      const variable = document.getElementById("variable").value;
+      const number = document.getElementById("number").value;
+      const symbol = document.getElementById("selected-symbol").innerText;
+
+      if (!variable || !number || symbol === "?") {
+        alert("يرجى إكمال الإجابة أولاً!");
+        return;
+      }
+
+      clearInterval(timer);
+
+      const userAnswer = `${variable} ${symbol} ${number}`;
+      const correctAnswer = `${variable} ${currentQuestion.symbol} ${currentQuestion.start}`;
+
+      let feedbackMessage;
+      if (symbol === currentQuestion.symbol && number == currentQuestion.start) {
+        feedbackMessage = `أحسنت ... إجابة صحيحة\nإجابتك: ${userAnswer}\nالإجابة الصحيحة: ${correctAnswer}`;
+        document.getElementById("feedback").className = "feedback correct";
+        score++;
+      } else {
+        feedbackMessage = `إجابة خاطئة\nإجابتك: ${userAnswer}\nالإجابة الصحيحة: ${correctAnswer}`;
+        document.getElementById("feedback").className = "feedback wrong";
+      }
+
+      document.getElementById("feedback").innerText = feedbackMessage;
+      document.getElementById("score").innerText = `النقاط: ${score}`;
+      document.getElementById("next-question").style.display = "block";
+    }
+
+    function endGame() {
+      alert(`انتهت اللعبة! إجاباتك الصحيحة: ${score} من ${maxQuestions}`);
+      document.getElementById("welcome-screen").style.display = "block";
+      document.getElementById("game-screen").style.display = "none";
+    }
+  </script>
+</body>
+</html>
