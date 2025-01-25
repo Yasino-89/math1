@@ -28,22 +28,53 @@
     }
     .number-line {
       position: relative;
-      width: 80%;
-      height: 50px;
+      width: 90%;
+      height: 60px;
       margin: 20px auto;
-      border: 2px solid #000;
-      border-radius: 5px;
+      border-top: 2px solid black;
     }
     .number-line span {
       position: absolute;
-      bottom: -20px;
+      bottom: 5px;
       font-size: 14px;
+      transform: translateX(-50%);
+    }
+    .number-line .tick {
+      position: absolute;
+      width: 2px;
+      height: 10px;
+      background-color: black;
+      top: -5px;
+      transform: translateX(-50%);
     }
     .highlight {
       position: absolute;
-      height: 100%;
-      background-color: rgba(135, 206, 250, 0.5);
-      border: 1px dashed #000;
+      height: 4px;
+      background-color: rgba(135, 206, 250, 0.8);
+      top: -2px;
+    }
+    .highlight-arrow {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      top: -4px;
+      transform: translateY(-50%);
+    }
+    .circle {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      top: -6px;
+      transform: translate(-50%, -50%);
+    }
+    .circle.filled {
+      background-color: blue;
+    }
+    .circle.empty {
+      border: 2px solid blue;
+      background-color: white;
     }
     .inputs {
       display: flex;
@@ -109,14 +140,15 @@
     <div class="question">حدد المتباينة بناءً على خط الأعداد التالي:</div>
 
     <div class="number-line" id="number-line">
-      <!-- خط الأعداد -->
-      <span style="left: 0;">0</span>
-      <span style="left: 20%;">10</span>
-      <span style="left: 40%;">20</span>
-      <span style="left: 60%;">30</span>
-      <span style="left: 80%;">40</span>
-      <span style="left: 100%;">50</span>
-      <div class="highlight" id="highlight" style="left: 40%; width: 20%;"></div>
+      <script>
+        for (let i = 0; i <= 20; i++) {
+          document.write(`<div class='tick' style='left: ${i * 5}%;'></div>`);
+          document.write(`<span style='left: ${i * 5}%;'>${i}</span>`);
+        }
+      </script>
+      <div class="highlight" id="highlight"></div>
+      <div class="highlight-arrow" id="highlight-arrow"></div>
+      <div class="circle empty" id="circle-start"></div>
     </div>
 
     <div class="inputs">
@@ -190,17 +222,27 @@
       startTimer();
       questionCount++;
 
-      const start = Math.floor(Math.random() * 40) + 1;
-      const end = start + Math.floor(Math.random() * 10) + 5;
+      const start = Math.floor(Math.random() * 20);
+      const isFilled = Math.random() > 0.5;
+      const direction = Math.random() > 0.5 ? '>' : '<';
+
       currentQuestion = {
         start,
-        end,
-        symbol: Math.random() > 0.5 ? "<" : ">",
+        symbol: isFilled ? (direction === '>' ? '≥' : '≤') : direction,
       };
 
       const highlight = document.getElementById("highlight");
-      highlight.style.left = `${(start / 50) * 100}%`;
-      highlight.style.width = `${((end - start) / 50) * 100}%`;
+      highlight.style.left = direction === '>' ? `${(start / 20) * 100}%` : `0%`;
+      highlight.style.width = direction === '>' ? `${((20 - start) / 20) * 100}%` : `${(start / 20) * 100}%`;
+
+      const circleStart = document.getElementById("circle-start");
+      circleStart.className = isFilled ? "circle filled" : "circle empty";
+      circleStart.style.left = `${(start / 20) * 100}%`;
+
+      const highlightArrow = document.getElementById("highlight-arrow");
+      highlightArrow.style.left = direction === '>' ? `100%` : `0%`;
+      highlightArrow.style.borderWidth = direction === '>' ? "5px 0 5px 10px" : "5px 10px 5px 0";
+      highlightArrow.style.borderColor = direction === '>' ? "transparent transparent transparent blue" : "transparent blue transparent transparent";
 
       document.getElementById("feedback").innerText = "";
       document.getElementById("selected-symbol").innerText = "?";
